@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Page</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<h2>Checkout Page</h2>
+
+<form id="paymentForm" onsubmit="return initiatePayment()">
+    <label for="amountInput">Amount:</label>
+    <input type="number" id="amountInput" name="amount" placeholder="Enter amount" required><br><br>
+    <button type="submit">Pay Now</button>
+</form>
+
+<script>
+    function initiatePayment() {
+        var amount = parseFloat(document.getElementById('amountInput').value);
+        // Check if the amount is a valid number
+        if (isNaN(amount) || amount <= 0) {
+            alert("Please enter a valid amount.");
+            return false; // Prevent form submission
+        }
+        // Multiply the amount by 100 and ensure it's an integer
+        var amountInPaise = Math.round(amount * 100);
+        // Check if the amount meets the minimum value requirement
+        if (amountInPaise < 100) {
+            alert("Amount should be at least ₹1.");
+            return false; // Prevent form submission
+        }
+        // Check if the amount is a multiple of 100
+        if (amountInPaise % 100 !== 0) {
+            alert("Amount should be in multiples of ₹1.");
+            return false; // Prevent form submission
+        }
+        // Create a Razorpay order
+        fetch('/create-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ amount: amountInPaise }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // If order creation is successful, open the payment modal
+            var options = {
+                "key": "rzp_test_g8FyyHWRqcqxxX",
+                "amount": data.amount, // Amount in currency subunits
+                "currency": "INR",
+                "name": "Your Company Name",
+                "description": "Purchase Description",
+                "order_id": data.id,
+                "config": {
+                    "display": {
+                        "blocks": {
+                            "utib": {
+                                "name": "Pay using Axis Bank",
+                                "instruments": [
+                                    {
+                                        "method": "card",
+                                        "issuers": ["UTIB"]
+                                    },
+                                    {
+                                        "method": "netbanking",
+                                        "banks": ["UTIB"]
+                                    }
+                                ]
+                            },
+                            "other": {
+                                "name": "Other Payment modes",
+                                "instruments": [
+                                    {
+                                        "method": "card",
+                                        "issuers": ["ICIC"]
+                                    },
+                                    {
+                                        "method": "netbanking"
+                                    }
+                                ]
+                            }
+                        },
+                        "hide": [
+                            {
+                                "method": "upi"
+                            }
+                        ],
+                        "sequence": ["block.utib", "block.other"],
+                        "preferences": {
+                            "show_default_blocks": false
+                        }
+                    }
+                },
+                "handler": function (response) {
+                    alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
+                },
+                "prefill": {
+                    "email": "customer@example.com",
+                    "contact": "+919876543210"
+                }
+            };
+            var rzp1 = new Razorpay(options);
+            rzp1.open();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+        return false; // Prevent form submission
+    }
+</script>
+
+</body>
+</html>

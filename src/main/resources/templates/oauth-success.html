@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile</title>
+</head>
+<body>
+<h1>Welcome, <span th:text="${authorities[0].attributes['name']}"></span>!</h1>
+<p>Email: <span th:text="${authorities[0].attributes['email']}"></span></p>
+<img th:src="${authorities[0].attributes['picture']}" alt="Profile Picture">
+</body>
+</html>
